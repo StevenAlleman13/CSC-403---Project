@@ -7,6 +7,9 @@ WIDTH, HEIGHT = 1280, 720
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AD Tinder")
 
+# Image imports
+scaled_image1 = pygame.transform.scale(pygame.image.load('phone1.jpg'), (540, 640))
+
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -15,7 +18,7 @@ LIGHT_GREEN = (144, 238, 144)
 GOLD = (182, 143, 64)
 LIGHT_BLUE = (173, 216, 230)
 CREAM = (255, 235, 205, 255)
-DARKGREY = (71, 71, 71, 255)
+DARKGREY = (51, 51, 51, 255)
 ROYALBLUE = (72, 118, 255, 255)
 
 # Font
@@ -33,7 +36,7 @@ def draw_gradient_background(surface, top_color, bottom_color):
         b = int(top_color[2] * (1 - ratio) + bottom_color[2] * ratio)
         pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
 
-# ---------------- TextBox Class ----------------
+# ----- TextBox Class -----
 class TextBox:
     def __init__(self, rect, font, text_color=BLACK, bg_color=WHITE, border_color=BLACK, border_color_active=GREEN,
                  placeholder="", is_password=False, max_len=64, border_width=3, radius=12):
@@ -125,7 +128,7 @@ class TextBox:
             bottom = top + self.font.get_height()
             pygame.draw.line(surface, border_col, (cursor_x + 1, top), (cursor_x + 1, bottom), 2)
 
-# Button Class
+# ----- Button Class -----
 class Button:
     def __init__(self, text, pos, font, base_color, hovering_color, callback):
         self.text = text
@@ -149,7 +152,8 @@ class Button:
         else:
             self.rendered = self.font.render(self.text, True, self.base_color)
 
-# Screen Functions
+# ----- Screens -----
+# Terms of Service screen and its button functions
 def tos():
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
@@ -161,7 +165,7 @@ def tos():
         SCREEN.blit(text, text_rect)
 
         # accept button
-        accept_button = Button("ACCEPT", (640, 460), get_font(75), BLACK, DARKGREY, start)
+        accept_button = Button("ACCEPT", (640, 460), get_font(75), BLACK, DARKGREY, adscreen)
         accept_button.change_color(mouse_pos)
         pygame.draw.rect(SCREEN, WHITE, accept_button.rect, border_radius=15)
         pygame.draw.rect(SCREEN, BLACK, accept_button.rect, 4, border_radius=15)
@@ -178,29 +182,30 @@ def tos():
 
         pygame.display.update()
 
-def start():
+# adscreen screen and its button functions
+def adscreen():
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
         mouse_pos = pygame.mouse.get_pos()
 
-        # Text
+        # text
         text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
         text_rect = text.get_rect(center=(640, 260))
         SCREEN.blit(text, text_rect)
 
-        # left button
-        left_button = Button("LEFT", (490, 460), get_font(75), BLACK, DARKGREY, start)
-        left_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, left_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, left_button.rect, 2, border_radius=15)
-        left_button.update(SCREEN)
+        # no button
+        no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, adscreen)
+        no_button.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, no_button.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, no_button.rect, 2, border_radius=15)
+        no_button.update(SCREEN)
 
-        # right button
-        right_button = Button("RIGHT", (790, 460), get_font(75), BLACK, DARKGREY, start)
-        right_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, right_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, right_button.rect, 2, border_radius=15)
-        right_button.update(SCREEN)
+        # yes button
+        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, adscreen)
+        yes_button.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, yes_button.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, yes_button.rect, 2, border_radius=15)
+        yes_button.update(SCREEN)
 
         # Event loop
         for event in pygame.event.get():
@@ -208,11 +213,17 @@ def start():
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if left_button.check_for_input(mouse_pos):
-                    left_button.callback()
+                if no_button.check_for_input(mouse_pos):
+                    no_button.callback()
+                if yes_button.check_for_input(mouse_pos):
+                    yes_button.callback()
+        SCREEN.blit(scaled_image1, scaled_image1.get_rect(center = SCREEN.get_rect().center))
+        pygame.display.flip()
+
 
         pygame.display.update()
 
+# Login screen and its button functions
 def login():
     # Create controls one time
     title = get_font(72).render("Sign In", True, WHITE)
@@ -222,6 +233,7 @@ def login():
     label_pass = get_font(36).render("Password", True, WHITE)
     label_ssn = get_font(36).render("SSN", True, WHITE)
 
+    #Username text box
     user_box = TextBox(
         rect=(WIDTH // 2 - 250, 220, 500, 60),
         font=get_font(36),
@@ -231,6 +243,7 @@ def login():
         border_color_active=ROYALBLUE,
         radius=15
     )
+    # Password text box
     pass_box = TextBox(
         rect=(WIDTH // 2 - 250, 320, 500, 60),
         font=get_font(36),
@@ -241,6 +254,7 @@ def login():
         is_password=True,
         radius=15
     )
+    # Social Security Number text box
     ssn_box = TextBox(
         rect=(WIDTH // 2 - 250, 420, 500, 60),
         font=get_font(36),
@@ -272,7 +286,7 @@ def login():
         pass_box.draw(SCREEN)
         ssn_box.draw(SCREEN)
 
-        # Continue button (only “enabled” if both have text)
+        # Continue button (All fields must be filled)
         enabled = bool(user_box.value.strip() and pass_box.value.strip() and ssn_box.value.strip())
         login_button.change_color(mouse_pos)
         pygame.draw.rect(SCREEN, WHITE if enabled else (200, 200, 200),
@@ -296,6 +310,7 @@ def login():
 
         pygame.display.update()
 
+# Main Menu screen and its button functions
 def main_menu():
     while True:
         draw_gradient_background(SCREEN, (255, 69, 0, 255), (220, 20, 60, 255))
@@ -328,5 +343,5 @@ def main_menu():
 
         pygame.display.update()
 
-# ---------------- Run Program ----------------
+# Run Program
 main_menu()

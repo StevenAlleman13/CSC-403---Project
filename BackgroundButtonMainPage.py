@@ -1,3 +1,4 @@
+import pygame
 class BackgroundButton:
     """
     An invisible background button for the main page that only triggers when
@@ -21,5 +22,5 @@ class BackgroundButton:
             self.on_click()
 
     # makes background button invisible
-    def draw(self): 
+    def draw_button(self): 
         pass

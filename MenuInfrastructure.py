@@ -1,4 +1,5 @@
 import pygame, sys, time
+from BackgroundButtonMainPage import BackgroundButton
 
 pygame.init()
 
@@ -40,6 +41,7 @@ def load_scaled(path):
 IMAGES = [load_scaled(p) for p in IMAGE_FILES]
 
 # --- Money counter ---
+# --- Money counter ---                                                                  Added Money Counter
 MONEY_CENTS = 0                                 # SA
 
 def format_money(cents: int) -> str:
@@ -47,6 +49,7 @@ def format_money(cents: int) -> str:
     c = cents % 100
     return f"${dollars:,}.{c:02d}"
 
+scaled_image1 = pygame.transform.scale(pygame.image.load('phone1.jpg'), (540, 640))
 
 # Colors
 WHITE = (255, 255, 255)
@@ -227,6 +230,14 @@ def adscreen():
    
     idx = 0                                     # SA
     current_img = IMAGES[idx]
+    from PartnerPage import partner_page  # assuming partner_page() exists elsewhere
+
+    # create background button after initializing the screen
+    bg_button = BackgroundButton(
+        rect=(0, 0, WIDTH, HEIGHT),
+        on_click=partner_page,
+        exclude_rects=[]
+    )
 
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
@@ -252,6 +263,20 @@ def adscreen():
         yes_button.update(SCREEN)
 
         # Event loop
+        text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
+        SCREEN.blit(text, text.get_rect(center=(640, 260)))
+
+        # Buttons
+        no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, adscreen)
+        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, adscreen)
+
+        for button in [no_button, yes_button]:
+            button.change_color(mouse_pos)
+            pygame.draw.rect(SCREEN, WHITE, button.rect, border_radius=15)
+            pygame.draw.rect(SCREEN, BLACK, button.rect, 2, border_radius=15)
+            button.update(SCREEN)
+
+        # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -262,6 +287,11 @@ def adscreen():
                     idx += 1
                     if idx >= len(IMAGES):
                         final_screen()
+                    MONEY_CENTS += 5                                                                                         #   Adds 5 cents each click
+                    idx += 1
+                    if idx >= len(IMAGES):
+                        idx = 0
+                        main_menu()
                     current_img = IMAGES[idx]
 
         SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
@@ -270,6 +300,13 @@ def adscreen():
         SCREEN.blit(money_surf, (20, 20))
         
         pygame.display.flip()
+            bg_button.handle_event(event)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if no_button.check_for_input(mouse_pos):
+                    no_button.callback()
+                if yes_button.check_for_input(mouse_pos):
+                    yes_button.callback()
+
         pygame.display.update()
 
 # Login screen and its button functions
@@ -424,4 +461,5 @@ def main_menu():
         pygame.display.update()
 
 # Run Program
+
 main_menu()

@@ -1,4 +1,5 @@
 import pygame, sys, time
+from BackgroundButtonMainPage import BackgroundButton
 
 pygame.init()
 
@@ -8,36 +9,7 @@ SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AD Tinder")
 
 # Image imports
-IMAGE_FILES = [
-    "phone1.jpg",
-    "phone2.jpg",
-    "phone3.jpg",
-    "phone4.jpg",
-    "phone5.jpg",
-    "watch1.jpg",
-    "watch2.jpg",
-    "watch3.jpg",
-    "watch4.jpg",
-    "shirt1.jpg",
-    "shirt2.jpg",
-    "shirt3.jpg",
-    "shirt4.jpg",
-    "shoe1.jpg",
-    "shoe2.jpg",
-    "shoe3.jpg",
-    "shoe4.jpg",
-    "shoe5.jpg",
-    "tv1.jpg",
-    "tv2.jpg",
-    "tv3.jpg",
-    "tv4.jpg",
-    "tv5.jpg",
-]
-
-def load_scaled(path):
-    return pygame.transform.scale(pygame.image.load(path), (540, 640))
-
-IMAGES = [load_scaled(p) for p in IMAGE_FILES]
+scaled_image1 = pygame.transform.scale(pygame.image.load('phone1.jpg'), (540, 640))
 
 # Colors
 WHITE = (255, 255, 255)
@@ -213,49 +185,43 @@ def tos():
 
 # adscreen screen and its button functions
 def adscreen():
+    from PartnerPage import partner_page  # assuming partner_page() exists elsewhere
 
-    idx = 0                                     # SA
-    current_img = IMAGES[idx]
+    # create background button after initializing the screen
+    bg_button = BackgroundButton(
+        rect=(0, 0, WIDTH, HEIGHT),
+        on_click=partner_page,
+        exclude_rects=[]
+    )
 
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
         mouse_pos = pygame.mouse.get_pos()
 
-        # text
         text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
-        text_rect = text.get_rect(center=(640, 260))
-        SCREEN.blit(text, text_rect)
+        SCREEN.blit(text, text.get_rect(center=(640, 260)))
 
-        # no button
+        # Buttons
         no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, adscreen)
-        no_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, no_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, no_button.rect, 2, border_radius=15)
-        no_button.update(SCREEN)
-
-        # yes button
         yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, adscreen)
-        yes_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, yes_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, yes_button.rect, 2, border_radius=15)
-        yes_button.update(SCREEN)
 
-        # Event loop
+        for button in [no_button, yes_button]:
+            button.change_color(mouse_pos)
+            pygame.draw.rect(SCREEN, WHITE, button.rect, border_radius=15)
+            pygame.draw.rect(SCREEN, BLACK, button.rect, 2, border_radius=15)
+            button.update(SCREEN)
+
+        # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            bg_button.handle_event(event)
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):            # SA
-                    idx += 1
-                    if idx >= len(IMAGES):
-                        idx = 0
-                        main_menu()
-                    current_img = IMAGES[idx]
-
-        SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
-        pygame.display.flip()
-
+                if no_button.check_for_input(mouse_pos):
+                    no_button.callback()
+                if yes_button.check_for_input(mouse_pos):
+                    yes_button.callback()
 
         pygame.display.update()
 
@@ -380,5 +346,4 @@ def main_menu():
         pygame.display.update()
 
 # Run Program
-
 main_menu()

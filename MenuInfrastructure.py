@@ -9,6 +9,45 @@ SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AD Tinder")
 
 # Image imports
+IMAGE_FILES = [
+    "phone1.jpg",
+    "phone2.jpg",
+    "phone3.jpg",
+    "phone4.jpg",
+    "phone5.jpg",
+    "watch1.jpg",
+    "watch2.jpg",
+    "watch3.jpg",
+    "watch4.jpg",
+    "shirt1.jpg",
+    "shirt2.jpg",
+    "shirt3.jpg",
+    "shirt4.jpg",
+    "shoe1.jpg",
+    "shoe2.jpg",
+    "shoe3.jpg",
+    "shoe4.jpg",
+    "shoe5.jpg",
+    "tv1.jpg",
+    "tv2.jpg",
+    "tv3.jpg",
+    "tv4.jpg",
+    "tv5.jpg",
+]
+
+def load_scaled(path):
+    return pygame.transform.scale(pygame.image.load(path), (540, 640))
+
+IMAGES = [load_scaled(p) for p in IMAGE_FILES]
+
+# --- Money counter ---                                                                  Added Money Counter
+MONEY_CENTS = 0                                 # SA
+
+def format_money(cents: int) -> str:
+    dollars = cents // 100
+    c = cents % 100
+    return f"${dollars:,}.{c:02d}"
+
 scaled_image1 = pygame.transform.scale(pygame.image.load('phone1.jpg'), (540, 640))
 
 # Colors
@@ -185,6 +224,11 @@ def tos():
 
 # adscreen screen and its button functions
 def adscreen():
+   
+    global MONEY_CENTS
+   
+    idx = 0                                     # SA
+    current_img = IMAGES[idx]
     from PartnerPage import partner_page  # assuming partner_page() exists elsewhere
 
     # create background button after initializing the screen
@@ -198,6 +242,26 @@ def adscreen():
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
         mouse_pos = pygame.mouse.get_pos()
 
+        # text
+        text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
+        text_rect = text.get_rect(center=(640, 260))
+        SCREEN.blit(text, text_rect)
+
+        # no button
+        no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, adscreen)
+        no_button.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, no_button.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, no_button.rect, 2, border_radius=15)
+        no_button.update(SCREEN)
+
+        # yes button
+        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, adscreen)
+        yes_button.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, yes_button.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, yes_button.rect, 2, border_radius=15)
+        yes_button.update(SCREEN)
+
+        # Event loop
         text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
         SCREEN.blit(text, text.get_rect(center=(640, 260)))
 
@@ -216,6 +280,21 @@ def adscreen():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):            # SA
+                    MONEY_CENTS += 5                                                                                         #   Adds 5 cents each click
+                    idx += 1
+                    if idx >= len(IMAGES):
+                        idx = 0
+                        main_menu()
+                    current_img = IMAGES[idx]
+
+        SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
+
+        money_surf = get_font(36).render(format_money(MONEY_CENTS), True, WHITE)
+        SCREEN.blit(money_surf, (20, 20))
+        
+        pygame.display.flip()
             bg_button.handle_event(event)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if no_button.check_for_input(mouse_pos):
@@ -346,4 +425,5 @@ def main_menu():
         pygame.display.update()
 
 # Run Program
+
 main_menu()

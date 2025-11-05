@@ -253,7 +253,7 @@ def adscreen():
                         main_menu()
                     current_img = IMAGES[idx]
 
-        SCREEN.blit(scaled_image1, scaled_image1.get_rect(center = SCREEN.get_rect().center))
+        SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
         pygame.display.flip()
 
 
@@ -380,4 +380,5 @@ def main_menu():
         pygame.display.update()
 
 # Run Program
+
 main_menu()

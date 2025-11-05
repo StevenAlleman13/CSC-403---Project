@@ -40,6 +40,7 @@ def load_scaled(path):
 
 IMAGES = [load_scaled(p) for p in IMAGE_FILES]
 
+# --- Money counter ---
 # --- Money counter ---                                                                  Added Money Counter
 MONEY_CENTS = 0                                 # SA
 
@@ -282,6 +283,10 @@ def adscreen():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):            # SA
+                    MONEY_CENTS += 5                    
+                    idx += 1
+                    if idx >= len(IMAGES):
+                        final_screen()
                     MONEY_CENTS += 5                                                                                         #   Adds 5 cents each click
                     idx += 1
                     if idx >= len(IMAGES):
@@ -390,6 +395,37 @@ def login():
                     login_button.callback()
 
         pygame.display.update()
+
+
+def final_screen():
+    global MONEY_CENTS
+
+    # Text on Final Screen
+    line1 = get_font(48).render("Thanks we sold your data to", True, WHITE)
+    line2 = get_font(48).render("Google, Meta, and 45 other companies!", True, WHITE)
+
+    # Money Counter
+    money_text = get_font(40).render(f"Total: {format_money(MONEY_CENTS)}", True, WHITE)
+
+    while True:
+        draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
+
+        # Center message
+        SCREEN.blit(line1, line1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40)))
+        SCREEN.blit(line2, line2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)))
+
+        money_rect = money_text.get_rect(midbottom=(WIDTH // 2, HEIGHT - 30))
+        SCREEN.blit(money_text, money_rect)
+
+        # Simple exit/loop behavior
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+            if event.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                main_menu()  # tap/click/press any key to return to main menu
+
+        pygame.display.update()
+
 
 # Main Menu screen and its button functions
 def main_menu():

@@ -39,7 +39,7 @@ def load_scaled(path):
 
 IMAGES = [load_scaled(p) for p in IMAGE_FILES]
 
-# --- Money counter ---
+# --- Money counter ---                                                                  Added Money Counter
 MONEY_CENTS = 0                                 # SA
 
 def format_money(cents: int) -> str:
@@ -258,7 +258,7 @@ def adscreen():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):            # SA
-                    MONEY_CENTS += 5                    
+                    MONEY_CENTS += 5                                                                                         #   Adds 5 cents each click
                     idx += 1
                     if idx >= len(IMAGES):
                         idx = 0
@@ -394,4 +394,5 @@ def main_menu():
         pygame.display.update()
 
 # Run Program
+
 main_menu()

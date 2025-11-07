@@ -1,4 +1,4 @@
-import pygame, sys, time
+import pygame, sys, time, random
 from BackgroundButtonMainPage import BackgroundButton
 
 pygame.init()
@@ -8,32 +8,102 @@ WIDTH, HEIGHT = 1280, 720
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AD Tinder")
 
-# Image imports
-IMAGE_FILES = [
+# Categorized image imports
+IMAGE_PHONE = [
     "phone1.jpg",
     "phone2.jpg",
     "phone3.jpg",
     "phone4.jpg",
-    "phone5.jpg",
+    "phone5.jpg"
+]
+
+IMAGE_WATCH = [
     "watch1.jpg",
     "watch2.jpg",
     "watch3.jpg",
-    "watch4.jpg",
+    "watch4.jpg"
+]
+
+IMAGE_SHIRT = [
     "shirt1.jpg",
     "shirt2.jpg",
     "shirt3.jpg",
-    "shirt4.jpg",
+    "shirt4.jpg"
+]
+
+IMAGE_SHOE = [
     "shoe1.jpg",
     "shoe2.jpg",
     "shoe3.jpg",
     "shoe4.jpg",
-    "shoe5.jpg",
+    "shoe5.jpg"
+]
+
+IMAGE_TV = [
     "tv1.jpg",
     "tv2.jpg",
     "tv3.jpg",
     "tv4.jpg",
-    "tv5.jpg",
+    "tv5.jpg"
 ]
+
+# Full image imports list for certain usecases
+IMAGE_FILES = IMAGE_PHONE + IMAGE_WATCH + IMAGE_SHIRT + IMAGE_SHOE + IMAGE_TV
+
+
+
+
+# Products list
+# Format: <String> Product name, <Float> Weight, <String List> Filenames
+#
+# Weight value will be amended when program is running, so not a constant
+products = [
+    ["Phone", 0.0, IMAGE_PHONE],
+    ["Watch", 0.0, IMAGE_WATCH],
+    ["Shirt", 0.0, IMAGE_SHIRT],
+    ["Shoe", 0.0, IMAGE_SHOE],
+    ["TV", 0.0, IMAGE_TV],
+]
+
+# take in products list 
+def get_ad(product_list):
+    # values that alter algorithm
+    BASE = 1.0  # base value (added to weight)
+    EXP = 2.0   # exponent   (applied to compound value)
+    MIN = 0.1   # minimum allowed compound value
+    
+
+    # ranges list: determines highest range of an index in products list being chosen.
+    ranges = []
+    # value: tracks the value of all previous compound values added together, or the previous value in the ranges list. will be equal to the final value in ranges list which is important for scaling a 0.0-1.0 range random var
+    value = 0
+
+    # fill out ranges list
+    for product in product_list:
+        # compound weight value
+        compound = ((product[1] + BASE) ^^ EXP)
+        # edge case for minimum value
+        if compound < 0.1:
+            compound = 0.1
+        
+        ranges.append(compound)
+        value += compound
+
+    # find random value
+    chosen = (random.random() * value)
+    
+    for i in range(len(product_list)):
+        # condition where i == 0
+        if (i == 0):
+            # succeed if chosen is lower than value at ranges[i] 
+            if (chosen < ranges[i]):
+                return product_list[i]
+        # condition where i > 0
+        else:
+            # succeed if chosen is greater than or equal to ranges[i - 1] and lower than ranges[i]
+            if ((chosen >= ranges[i - 1]) and (chosen < ranges[i])):
+                return product_list[i]
+
 
 def load_scaled(path):
     return pygame.transform.scale(pygame.image.load(path), (540, 640))

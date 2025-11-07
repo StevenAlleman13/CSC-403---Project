@@ -252,30 +252,18 @@ def adscreen():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if donate_btn.check_for_input(mouse_pos):
-                    MONEY_CENTS += 500 * 100             # +500 dollars
                 if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):
-                    MONEY_CENTS += 5               # +5 cents
-                    idx += 1
+                    MONEY_CENTS += 5
+                    idx += 1                       # advance ONCE
                     if idx >= len(IMAGES):
                         final_screen()
-                        return
+                        return                    # leave this loop
                     current_img = IMAGES[idx]
 
         # draw image + money
         SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
         money_surf = get_font(36).render(format_money(MONEY_CENTS), True, WHITE)
         SCREEN.blit(money_surf, (20, 20))
-
-        # donate button
-        donate_btn = Button("DONATE", (0, 0), get_font(50), BLACK, DARKGREY, None)
-        donate_btn.rect.bottomleft = (30, HEIGHT - 30)
-        donate_btn.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, donate_btn.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, donate_btn.rect, 2, border_radius=15)
-        donate_btn.update(SCREEN)
-
-
 
         pygame.display.update()
 
@@ -390,40 +378,25 @@ def final_screen():
         SCREEN.blit(money_text, money_rect)
 
         # restart button
-        restart_btn = Button("RESTART", (0, 0), get_font(50), BLACK, DARKGREY, adscreen)
+        restart_btn = Button("RESTART", (0, 0), get_font(36), BLACK, DARKGREY, adscreen)
         restart_btn.rect.midbottom = (
             money_rect.right + 100 + restart_btn.rect.width // 2,
             money_rect.bottom
         )
-
-        # exit button
-        exit_btn = Button("EXIT", (0, 0), get_font(50), BLACK, DARKGREY, main_menu)
-        exit_btn.rect.midbottom = (
-            money_rect.left - 100 - exit_btn.rect.width // 2,  # mirror spacing
-            money_rect.bottom
-        )
-
-        # draw buttons
         mouse_pos = pygame.mouse.get_pos()
-        for btn in (exit_btn, restart_btn):
-            btn.change_color(mouse_pos)
-            pygame.draw.rect(SCREEN, WHITE, btn.rect, border_radius=15)
-            pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
-            btn.update(SCREEN)
+        restart_btn.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, restart_btn.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, restart_btn.rect, 2, border_radius=15)
+        restart_btn.update(SCREEN)
 
-        # restart / exit Button events
-        # resart = back to adscreen
-        # exit = back to 
+        # click restart-> back to adscreen
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if restart_btn.check_for_input(mouse_pos):
                     restart_btn.callback()
-                    return
-                if exit_btn.check_for_input(mouse_pos):
-                    exit_btn.callback()
-                    return
+                    return  
 
         pygame.display.update()
 

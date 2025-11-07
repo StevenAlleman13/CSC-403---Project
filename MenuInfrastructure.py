@@ -39,7 +39,6 @@ def load_scaled(path):
 
 IMAGES = [load_scaled(p) for p in IMAGE_FILES]
 
-# --- Money counter ---
 # --- Money counter ---                                                                  Added Money Counter
 MONEY_CENTS = 0                                 # SA
 
@@ -76,7 +75,11 @@ def draw_gradient_background(surface, top_color, bottom_color):
         b = int(top_color[2] * (1 - ratio) + bottom_color[2] * ratio)
         pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
 
-# ----- TextBox Class -----
+
+
+
+
+# TextBox
 class TextBox:
     def __init__(self, rect, font, text_color=BLACK, bg_color=WHITE, border_color=BLACK, border_color_active=GREEN,
                  placeholder="", is_password=False, max_len=64, border_width=3, radius=12):
@@ -168,7 +171,10 @@ class TextBox:
             bottom = top + self.font.get_height()
             pygame.draw.line(surface, border_col, (cursor_x + 1, top), (cursor_x + 1, bottom), 2)
 
-# ----- Button Class -----
+
+
+
+# Buttons
 class Button:
     def __init__(self, text, pos, font, base_color, hovering_color, callback):
         self.text = text
@@ -192,8 +198,12 @@ class Button:
         else:
             self.rendered = self.font.render(self.text, True, self.base_color)
 
-# ----- Screens -----
-# Terms of Service screen and its button functions
+
+
+
+
+
+# Terms of Service screen
 def tos():
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
@@ -223,6 +233,10 @@ def tos():
         pygame.display.update()
 
 
+
+
+
+
 def adscreen():
     global MONEY_CENTS
 
@@ -233,34 +247,44 @@ def adscreen():
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
         mouse_pos = pygame.mouse.get_pos()
 
-        # header once
-        header = get_font(45).render("TWO Images Displayed Here", True, WHITE)
-        SCREEN.blit(header, header.get_rect(center=(640, 260)))
-
-        # buttons once
+        # YES / NO buttons
         no_button  = Button("NO",  (285, 360), get_font(75), BLACK, DARKGREY, None)
         yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, None)
-
         for btn in (no_button, yes_button):
             btn.change_color(mouse_pos)
             pygame.draw.rect(SCREEN, WHITE, btn.rect, border_radius=15)
             pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
             btn.update(SCREEN)
 
+        # DONATE button (bottom-left)
+        donate_btn = Button("DONATE", (0, 0), get_font(50), BLACK, DARKGREY, None)
+        donate_btn.rect.bottomleft = (30, HEIGHT - 30)
+        donate_btn.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, donate_btn.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, donate_btn.rect, 2, border_radius=15)
+        donate_btn.update(SCREEN)
+
         # events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):
-                    MONEY_CENTS += 5
-                    idx += 1                       # advance ONCE
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # prioritize button hits first
+                if donate_btn.check_for_input(event.pos):
+                    MONEY_CENTS += 500 * 100  # +$500.00
+                elif no_button.check_for_input(event.pos) or yes_button.check_for_input(event.pos):
+                    MONEY_CENTS += 5          # +$0.05
+                    idx += 1
                     if idx >= len(IMAGES):
                         final_screen()
-                        return                    # leave this loop
+                        return
                     current_img = IMAGES[idx]
+                else:
+                    # anywhere else -> partner page for 5s, then return here
+                    show_partner_page(5)
 
-        # draw image + money
+        # draw current image + money
         SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
         money_surf = get_font(36).render(format_money(MONEY_CENTS), True, WHITE)
         SCREEN.blit(money_surf, (20, 20))
@@ -268,7 +292,55 @@ def adscreen():
         pygame.display.update()
 
 
-# Login screen and its button functions
+
+
+
+
+def show_partner_page(seconds: int = 5):
+    """Show a Partner Page with 6 main partners arranged nicely for `seconds`, then return."""
+    end_time = pygame.time.get_ticks() + seconds * 1000
+    title_surf = get_font(64).render("Partner Page", True, WHITE)
+    title_rect = title_surf.get_rect(midtop=(WIDTH // 2, 40))
+
+    partners = [
+        ("Google",      (66, 133, 244)),   # Blue
+        ("Meta",        (59, 89, 152)),    # Facebook Blue
+        ("Amazon",      (255, 153, 0)),    # Orange
+        ("Apple",       (153, 153, 153)),  # Grey
+        ("TikTok",      (255, 59, 92)),    # Pinkish Red
+        ("Twitter",     (29, 161, 242))    # Light Blue
+    ]
+
+    partner_surfs = []
+    y_positions = [400, 400, 400, 700, 700, 700]
+    x_positions = [WIDTH // 4, WIDTH // 2, (WIDTH * 3) // 4,
+                   WIDTH // 4, WIDTH // 2, (WIDTH * 3) // 4]
+
+    # render names
+    for i, (name, color) in enumerate(partners):
+        surf = get_font(48).render(name, True, color)
+        rect = surf.get_rect(center=(x_positions[i], y_positions[i] - 120))
+        partner_surfs.append((surf, rect))
+
+    # main display loop
+    while pygame.time.get_ticks() < end_time:
+        SCREEN.fill(BLACK)
+        SCREEN.blit(title_surf, title_rect)
+        for surf, rect in partner_surfs:
+            SCREEN.blit(surf, rect)
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+        pygame.display.update()
+        pygame.time.delay(16) 
+
+
+
+
+
+
+
+# Login screen
 def login():
     # Create controls one time
     title = get_font(72).render("Sign In", True, WHITE)
@@ -303,15 +375,17 @@ def login():
     ssn_box = TextBox(
         rect=(WIDTH // 2 - 250, 420, 500, 60),
         font=get_font(36),
-        placeholder="Enter SSN",
+        placeholder="*****",
         bg_color=WHITE,
         border_color=BLACK,
         border_color_active=ROYALBLUE,
         is_password=True,
-        radius=15
+        radius=15,
+        max_len=5     # limit to 5 characters
     )
 
     login_button = Button("LOGIN", (WIDTH // 2, 550), get_font(60), BLACK, WHITE, tos)
+
 
     while True:
         draw_gradient_background(SCREEN, (255, 69, 0, 255), (220, 20, 60, 255))
@@ -356,6 +430,15 @@ def login():
         pygame.display.update()
 
 
+
+
+
+
+
+
+
+
+
 def final_screen():
     global MONEY_CENTS
 
@@ -376,43 +459,66 @@ def final_screen():
         SCREEN.blit(money_text, money_rect)
 
         # restart button
-        restart_btn = Button("RESTART", (0, 0), get_font(36), BLACK, DARKGREY, adscreen)
+        restart_btn = Button("RESTART", (0, 0), get_font(50), BLACK, DARKGREY, adscreen)
         restart_btn.rect.midbottom = (
             money_rect.right + 100 + restart_btn.rect.width // 2,
             money_rect.bottom
         )
-        mouse_pos = pygame.mouse.get_pos()
-        restart_btn.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, restart_btn.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, restart_btn.rect, 2, border_radius=15)
-        restart_btn.update(SCREEN)
 
-        # click restart-> back to adscreen
+        # exit button
+        exit_btn = Button("EXIT", (0, 0), get_font(50), BLACK, DARKGREY, main_menu)
+        exit_btn.rect.midbottom = (
+            money_rect.left - 100 - exit_btn.rect.width // 2,  # mirror spacing
+            money_rect.bottom
+        )
+
+        # draw buttons
+        mouse_pos = pygame.mouse.get_pos()
+        for btn in (exit_btn, restart_btn):
+            btn.change_color(mouse_pos)
+            pygame.draw.rect(SCREEN, WHITE, btn.rect, border_radius=15)
+            pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
+            btn.update(SCREEN)
+
+        # restart / exit Button events
+        # resart = back to adscreen
+        # exit = back to 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if restart_btn.check_for_input(mouse_pos):
                     restart_btn.callback()
-                    return  
+                    return
+                if exit_btn.check_for_input(mouse_pos):
+                    exit_btn.callback()
+                    return
 
         pygame.display.update()
 
 
 
 
-# Main Menu screen and its button functions
+
+
+
+
+
+
+
+
+# Main Menu screen
 def main_menu():
     while True:
         draw_gradient_background(SCREEN, (255, 69, 0, 255), (220, 20, 60, 255))
         mouse_pos = pygame.mouse.get_pos()
 
-        # Menu title
+        # menu title
         title_text = get_font(100).render("AD TINDER", True, WHITE)
         title_rect = title_text.get_rect(center=(640, 100))
         SCREEN.blit(title_text, title_rect)
 
-        # Buttons
+        # start / exit buttons
         start_button = Button("START", (640, 325), get_font(75), BLACK, BLACK, login)
         quit_button = Button("QUIT", (640, 475), get_font(75), BLACK, BLACK, sys.exit)
 
@@ -422,7 +528,7 @@ def main_menu():
             pygame.draw.rect(SCREEN, BLACK, button.rect, 4, border_radius=15)
             button.update(SCREEN)
 
-        # Event handling
+        # event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
@@ -433,7 +539,5 @@ def main_menu():
                     pygame.quit(); sys.exit()
 
         pygame.display.update()
-
-# Run Program
 
 main_menu()

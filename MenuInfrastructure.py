@@ -1,5 +1,4 @@
 import pygame, sys, time
-from BackgroundButtonMainPage import BackgroundButton
 
 pygame.init()
 
@@ -223,91 +222,51 @@ def tos():
 
         pygame.display.update()
 
-# adscreen screen and its button functions
-def adscreen():
-   
-    global MONEY_CENTS
-   
-    idx = 0                                     # SA
-    current_img = IMAGES[idx]
-    from PartnerPage import partner_page  # assuming partner_page() exists elsewhere
 
-    # create background button after initializing the screen
-    bg_button = BackgroundButton(
-        rect=(0, 0, WIDTH, HEIGHT),
-        on_click=partner_page,
-        exclude_rects=[]
-    )
+def adscreen():
+    global MONEY_CENTS
+
+    idx = 0
+    current_img = IMAGES[idx]
 
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
         mouse_pos = pygame.mouse.get_pos()
 
-        # text
-        text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
-        text_rect = text.get_rect(center=(640, 260))
-        SCREEN.blit(text, text_rect)
+        # header once
+        header = get_font(45).render("TWO Images Displayed Here", True, WHITE)
+        SCREEN.blit(header, header.get_rect(center=(640, 260)))
 
-        # no button
-        no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, adscreen)
-        no_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, no_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, no_button.rect, 2, border_radius=15)
-        no_button.update(SCREEN)
+        # buttons once
+        no_button  = Button("NO",  (285, 360), get_font(75), BLACK, DARKGREY, None)
+        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, None)
 
-        # yes button
-        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, adscreen)
-        yes_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, yes_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, yes_button.rect, 2, border_radius=15)
-        yes_button.update(SCREEN)
+        for btn in (no_button, yes_button):
+            btn.change_color(mouse_pos)
+            pygame.draw.rect(SCREEN, WHITE, btn.rect, border_radius=15)
+            pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
+            btn.update(SCREEN)
 
-        # Event loop
-        text = get_font(45).render("TWO Images Displayed Here", True, WHITE)
-        SCREEN.blit(text, text.get_rect(center=(640, 260)))
-
-        # Buttons
-        no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, adscreen)
-        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, adscreen)
-
-        for button in [no_button, yes_button]:
-            button.change_color(mouse_pos)
-            pygame.draw.rect(SCREEN, WHITE, button.rect, border_radius=15)
-            pygame.draw.rect(SCREEN, BLACK, button.rect, 2, border_radius=15)
-            button.update(SCREEN)
-
-        # Handle events
+        # events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                pygame.quit(); sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):            # SA
-                    MONEY_CENTS += 5                    
-                    idx += 1
+                if no_button.check_for_input(mouse_pos) or yes_button.check_for_input(mouse_pos):
+                    MONEY_CENTS += 5
+                    idx += 1                     
                     if idx >= len(IMAGES):
                         final_screen()
-                    MONEY_CENTS += 5                                                                                         #   Adds 5 cents each click
-                    idx += 1
-                    if idx >= len(IMAGES):
-                        idx = 0
-                        main_menu()
+                        return                    
                     current_img = IMAGES[idx]
 
+        # draw image + money
         SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
-
         money_surf = get_font(36).render(format_money(MONEY_CENTS), True, WHITE)
         SCREEN.blit(money_surf, (20, 20))
-        
-        pygame.display.flip()
-            bg_button.handle_event(event)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if no_button.check_for_input(mouse_pos):
-                    no_button.callback()
-                if yes_button.check_for_input(mouse_pos):
-                    yes_button.callback()
 
         pygame.display.update()
+
 
 # Login screen and its button functions
 def login():
@@ -400,8 +359,12 @@ def login():
 def final_screen():
     global MONEY_CENTS
 
+    # Text on Final Screen
     line1 = get_font(48).render("Thanks we sold your data to", True, WHITE)
     line2 = get_font(48).render("Google, Meta, and 45 other companies!", True, WHITE)
+
+    # Money Counter
+    money_text = get_font(40).render(f"Total: {format_money(MONEY_CENTS)}", True, WHITE)
 
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
@@ -410,34 +373,17 @@ def final_screen():
         SCREEN.blit(line1, line1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40)))
         SCREEN.blit(line2, line2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)))
 
-        # Money Counter
-        money_text = get_font(40).render(f"Total: {format_money(MONEY_CENTS)}", True, WHITE)
         money_rect = money_text.get_rect(midbottom=(WIDTH // 2, HEIGHT - 30))
         SCREEN.blit(money_text, money_rect)
 
-        # Restart button
-        restart_btn = Button("RESTART", (0, 0), get_font(36), BLACK, DARKGREY, adscreen)
-        # place with a small gap (20px) to the left, aligned on bottom
-        restart_btn.rect.midbottom = (money_rect.left - 20, money_rect.bottom)
-
-        mouse_pos = pygame.mouse.get_pos()
-        restart_btn.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, restart_btn.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, restart_btn.rect, 2, border_radius=15)
-        restart_btn.update(SCREEN)
-
-        # Events
+        # Simple exit/loop behavior
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if restart_btn.check_for_input(mouse_pos):
-                    # Optional: reset money when restarting:
-                    # MONEY_CENTS = 0
-                    restart_btn.callback()  # back to adscreen()
+            if event.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                main_menu()  # tap/click/press any key to return to main menu
 
         pygame.display.update()
-
 
 
 # Main Menu screen and its button functions
@@ -476,4 +422,3 @@ def main_menu():
 # Run Program
 
 main_menu()
-

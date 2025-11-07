@@ -303,13 +303,15 @@ def login():
     ssn_box = TextBox(
         rect=(WIDTH // 2 - 250, 420, 500, 60),
         font=get_font(36),
-        placeholder="Enter SSN",
+        placeholder="*****",
         bg_color=WHITE,
         border_color=BLACK,
         border_color_active=ROYALBLUE,
         is_password=True,
-        radius=15
+        radius=15,
+        max_len=5     # limit to 5 characters
     )
+
 
     login_button = Button("LOGIN", (WIDTH // 2, 550), get_font(60), BLACK, WHITE, tos)
 

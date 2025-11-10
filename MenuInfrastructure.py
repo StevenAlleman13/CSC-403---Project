@@ -75,25 +75,7 @@ def draw_gradient_background(surface, top_color, bottom_color):
         b = int(top_color[2] * (1 - ratio) + bottom_color[2] * ratio)
         pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
 
-def display_text_file(surface, text, font, color, rect, line_spacing=6):
-    words = text.split()
-    lines, cur = [], ""
-    for w in words:
-        test = (cur + " " + w).strip()
-        if font.size(test)[0] <= rect.width:
-            cur = test
-        else:
-            lines.append(cur); cur = w
-    if cur:
-        lines.append(cur)
 
-    y = rect.y
-    for line in lines:
-        if y + font.get_height() > rect.bottom:
-            break  # stop when we run out of space (no scrolling per request)
-        surf = font.render(line, True, color)
-        surface.blit(surf, (rect.x, y))
-        y += font.get_height() + line_spacing
 
 
 
@@ -216,6 +198,148 @@ class Button:
         else:
             self.rendered = self.font.render(self.text, True, self.base_color)
 
+
+
+
+
+
+# Terms of Service screen
+def tos():
+    while True:
+        draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Text
+        text = get_font(45).render("Terms of Service", True, WHITE)
+        text_rect = text.get_rect(center=(640, 260))
+        SCREEN.blit(text, text_rect)
+
+        # accept button
+        accept_button = Button("ACCEPT", (640, 460), get_font(75), BLACK, DARKGREY, adscreen)
+        accept_button.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, accept_button.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, accept_button.rect, 4, border_radius=15)
+        accept_button.update(SCREEN)
+
+        # Event loop
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if accept_button.check_for_input(mouse_pos):
+                    accept_button.callback()
+
+        pygame.display.update()
+
+
+
+
+
+
+def adscreen():
+    global MONEY_CENTS
+
+    idx = 0
+    current_img = IMAGES[idx]
+
+    while True:
+        draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
+        mouse_pos = pygame.mouse.get_pos()
+
+        # YES / NO buttons
+        no_button  = Button("NO",  (285, 360), get_font(75), BLACK, DARKGREY, None)
+        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, None)
+        for btn in (no_button, yes_button):
+            btn.change_color(mouse_pos)
+            pygame.draw.rect(SCREEN, WHITE, btn.rect, border_radius=15)
+            pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
+            btn.update(SCREEN)
+
+        # DONATE button (bottom-left)
+        donate_btn = Button("DONATE", (0, 0), get_font(50), BLACK, DARKGREY, None)
+        donate_btn.rect.bottomleft = (30, HEIGHT - 30)
+        donate_btn.change_color(mouse_pos)
+        pygame.draw.rect(SCREEN, WHITE, donate_btn.rect, border_radius=15)
+        pygame.draw.rect(SCREEN, BLACK, donate_btn.rect, 2, border_radius=15)
+        donate_btn.update(SCREEN)
+
+        # events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # prioritize button hits first
+                if donate_btn.check_for_input(event.pos):
+                    MONEY_CENTS += 500 * 100  # +$500.00
+                elif no_button.check_for_input(event.pos) or yes_button.check_for_input(event.pos):
+                    MONEY_CENTS += 5          # +$0.05
+                    idx += 1
+                    if idx >= len(IMAGES):
+                        final_screen()
+                        return
+                    current_img = IMAGES[idx]
+                else:
+                    # anywhere else -> partner page for 5s, then return here
+                    show_partner_page(5)
+
+        # draw current image + money
+        SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
+        money_surf = get_font(36).render(format_money(MONEY_CENTS), True, WHITE)
+        SCREEN.blit(money_surf, (20, 20))
+
+        pygame.display.update()
+
+
+
+
+
+
+def show_partner_page(seconds: int = 5):
+    """Show a Partner Page with 6 main partners arranged nicely for `seconds`, then return."""
+    end_time = pygame.time.get_ticks() + seconds * 1000
+    title_surf = get_font(64).render("Partner Page", True, WHITE)
+    title_rect = title_surf.get_rect(midtop=(WIDTH // 2, 40))
+
+    partners = [
+        ("Google",      (66, 133, 244)),   # Blue
+        ("Meta",        (59, 89, 152)),    # Facebook Blue
+        ("Amazon",      (255, 153, 0)),    # Orange
+        ("Apple",       (153, 153, 153)),  # Grey
+        ("TikTok",      (255, 59, 92)),    # Pinkish Red
+        ("Twitter",     (29, 161, 242))    # Light Blue
+    ]
+
+    partner_surfs = []
+    y_positions = [400, 400, 400, 700, 700, 700]
+    x_positions = [WIDTH // 4, WIDTH // 2, (WIDTH * 3) // 4,
+                   WIDTH // 4, WIDTH // 2, (WIDTH * 3) // 4]
+
+    # render names
+    for i, (name, color) in enumerate(partners):
+        surf = get_font(48).render(name, True, color)
+        rect = surf.get_rect(center=(x_positions[i], y_positions[i] - 120))
+        partner_surfs.append((surf, rect))
+
+    # main display loop
+    while pygame.time.get_ticks() < end_time:
+        SCREEN.fill(BLACK)
+        SCREEN.blit(title_surf, title_rect)
+        for surf, rect in partner_surfs:
+            SCREEN.blit(surf, rect)
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+        pygame.display.update()
+        pygame.time.delay(16) 
+
+
+
+
+
+
+
 # Login screen
 def login():
     # Create controls one time
@@ -306,149 +430,15 @@ def login():
 
         pygame.display.update()
 
-# Terms of Service screen
-def tos():
-    # Load TOS text file
-    try:
-        with open("TOS.txt", "r", encoding="utf-8") as f:
-            tos_text = f.read()
-    except Exception:
-        tos_text = "Terms of Service file (TOS.txt) not found."
 
-    # Box for the TOS text
-    box_rect = pygame.Rect(0, 0, 850, 400)
-    box_rect.center = (WIDTH // 2, HEIGHT // 2)
 
-    while True:
-        draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
-        mouse_pos = pygame.mouse.get_pos()
 
-        # Title
-        title = get_font(72).render("Terms of Service", True, WHITE)
-        title_rect = title.get_rect(center=(WIDTH // 2, 115))
-        SCREEN.blit(title, title_rect)
 
-        # Draw the TOS text box
-        pygame.draw.rect(SCREEN, WHITE, box_rect, border_radius=12)
-        pygame.draw.rect(SCREEN, BLACK, box_rect, 3, border_radius=12)
 
-        # Display TOS text, fit to the box size given to it
-        display_text_file(
-            SCREEN,
-            tos_text,
-            get_font(20),
-            BLACK,
-            box_rect.inflate(-20, -16)  # small padding inside the box
-        )
 
-        # Accept button
-        accept_button = Button("ACCEPT", (640, 625), get_font(75), BLACK, DARKGREY, adscreen)
-        accept_button.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, accept_button.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, accept_button.rect, 4, border_radius=15)
-        accept_button.update(SCREEN)
 
-        # Events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if accept_button.check_for_input(mouse_pos):
-                    accept_button.callback()
 
-        pygame.display.update()
 
-def adscreen():
-    global MONEY_CENTS
-
-    idx = 0
-    current_img = IMAGES[idx]
-
-    while True:
-        draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
-        mouse_pos = pygame.mouse.get_pos()
-
-        # YES / NO buttons
-        no_button  = Button("NO",  (285, 360), get_font(75), BLACK, DARKGREY, None)
-        yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, None)
-        for btn in (no_button, yes_button):
-            btn.change_color(mouse_pos)
-            pygame.draw.rect(SCREEN, WHITE, btn.rect, border_radius=15)
-            pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
-            btn.update(SCREEN)
-
-        # DONATE button (bottom-left)
-        donate_btn = Button("DONATE", (0, 0), get_font(50), BLACK, DARKGREY, None)
-        donate_btn.rect.bottomleft = (30, HEIGHT - 30)
-        donate_btn.change_color(mouse_pos)
-        pygame.draw.rect(SCREEN, WHITE, donate_btn.rect, border_radius=15)
-        pygame.draw.rect(SCREEN, BLACK, donate_btn.rect, 2, border_radius=15)
-        donate_btn.update(SCREEN)
-
-        # events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
-
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # prioritize button hits first
-                if donate_btn.check_for_input(event.pos):
-                    MONEY_CENTS += 500 * 100  # +$500.00
-                elif no_button.check_for_input(event.pos) or yes_button.check_for_input(event.pos):
-                    MONEY_CENTS += 5          # +$0.05
-                    idx += 1
-                    if idx >= len(IMAGES):
-                        final_screen()
-                        return
-                    current_img = IMAGES[idx]
-                else:
-                    # anywhere else -> partner page for 5s, then return here
-                    show_partner_page(5)
-
-        # draw current image + money
-        SCREEN.blit(current_img, current_img.get_rect(center=SCREEN.get_rect().center))
-        money_surf = get_font(36).render(format_money(MONEY_CENTS), True, WHITE)
-        SCREEN.blit(money_surf, (20, 20))
-
-        pygame.display.update()
-
-def show_partner_page(seconds: int = 5):
-    """Show a Partner Page with 6 main partners arranged nicely for `seconds`, then return."""
-    end_time = pygame.time.get_ticks() + seconds * 1000
-    title_surf = get_font(64).render("Partner Page", True, WHITE)
-    title_rect = title_surf.get_rect(midtop=(WIDTH // 2, 40))
-
-    partners = [
-        ("Google",      (66, 133, 244)),   # Blue
-        ("Meta",        (59, 89, 152)),    # Facebook Blue
-        ("Amazon",      (255, 153, 0)),    # Orange
-        ("Apple",       (153, 153, 153)),  # Grey
-        ("TikTok",      (255, 59, 92)),    # Pinkish Red
-        ("Twitter",     (29, 161, 242))    # Light Blue
-    ]
-
-    partner_surfs = []
-    y_positions = [400, 400, 400, 700, 700, 700]
-    x_positions = [WIDTH // 4, WIDTH // 2, (WIDTH * 3) // 4,
-                   WIDTH // 4, WIDTH // 2, (WIDTH * 3) // 4]
-
-    # render names
-    for i, (name, color) in enumerate(partners):
-        surf = get_font(48).render(name, True, color)
-        rect = surf.get_rect(center=(x_positions[i], y_positions[i] - 120))
-        partner_surfs.append((surf, rect))
-
-    # main display loop
-    while pygame.time.get_ticks() < end_time:
-        SCREEN.fill(BLACK)
-        SCREEN.blit(title_surf, title_rect)
-        for surf, rect in partner_surfs:
-            SCREEN.blit(surf, rect)
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
-        pygame.display.update()
-        pygame.time.delay(16) 
 
 def final_screen():
     global MONEY_CENTS

@@ -62,20 +62,18 @@ IMAGE_TV = [
     "tv7.jpg"
 ]
 
-
 # final ads list. these will display upon completion based on product with highest weight value.
 # will not be included in overall image files list.
 FINAL_ADS = [
-        "phoneperfect.jpg",
-        "watchperfect.jpg",
-        "shirtperfect.jpg",
-        "shoeperfect.jpg",
-        "tvperfect.jpg"
+    "phoneperfect.jpg",
+    "watchperfect.jpg",
+    "shirtperfect.jpg",
+    "shoeperfect.jpg",
+    "tvperfect.jpg"
 ]
 
 # Full image imports list for certain usecases
 IMAGE_FILES = IMAGE_PHONE + IMAGE_WATCH + IMAGE_SHIRT + IMAGE_SHOE + IMAGE_TV
-
 
 # Products list
 # Format: <String> Product name, <Float> Weight, <String List> Filenames, <Integer> index within products list
@@ -89,15 +87,16 @@ products = [
     ["TV", 0.0, IMAGE_TV, 4],
 ]
 
+
 # take in products list (but not as a parameter so as to edit it)
 # returns one product within the products list
 # is passed to a different function to find a random ad in that category
 def get_ad():
     # values that alter algorithm
     BASE = 1.0  # base value (added to weight)
-    EXP = 2.0   # exponent   (applied to compound value)
-    MIN = 0.1   # minimum allowed compound value
-    
+    EXP = 2.0  # exponent   (applied to compound value)
+    MIN = 0.1  # minimum allowed compound value
+
     # ranges list: determines highest range of an index in products list being chosen.
     ranges = []
     # value: tracks the value of all previous compound values added together, or the previous value in the ranges list. will be equal to the final value in ranges list which is important for scaling a 0.0-1.0 range random var
@@ -110,24 +109,22 @@ def get_ad():
         # edge case for minimum value
         if compound < 0.1:
             compound = 0.1
-        
+
         value += compound
         ranges.append(value)
-        
 
     # find random value
     chosen = (random.random() * value)
-    
+
     # debug
     if DEBUG:
         print(ranges)
-    
-    
+
     # iterate over ranges list and find chosen product using relative indexing
     for i in range(len(products)):
         # condition where i == 0
         if (i == 0):
-            # succeed if chosen is lower than value at ranges[i] 
+            # succeed if chosen is lower than value at ranges[i]
             if (chosen < ranges[i]):
                 # debug
                 if DEBUG:
@@ -141,7 +138,7 @@ def get_ad():
                 if DEBUG:
                     print("return value: " + products[i][0])
                 return products[i]
-            
+
 
 # parameters: specific product list(an entry in products list)
 #
@@ -154,6 +151,7 @@ def get_random_ad(product):
         print(index)
     return product[2][index]
 
+
 # parameters: none
 # resets weight values of all products to 1.0
 # primary use is for when game restarts
@@ -161,23 +159,27 @@ def reset_weights():
     for product in products:
         product[1] = 1.0
 
+
 # parameters: relative file pathway to images (stored in images folder)
 #
 # returns image for use in pygame
 def load_scaled(path):
     return pygame.transform.scale(pygame.image.load('images\\' + path), (540, 640))
 
+
 IMAGES = [load_scaled(p) for p in IMAGE_FILES]
 
 # --- Money counter ---                                                                  Added Money Counter
-MONEY_CENTS = 0                                 # SA
+MONEY_CENTS = 0  # SA
+
 
 def format_money(cents: int) -> str:
     dollars = cents // 100
     c = cents % 100
     return f"${dollars:,}.{c:02d}"
 
-scaled_image1 = pygame.transform.scale(pygame.image.load('images\phone1.jpg'), (540, 640))
+
+scaled_image1 = pygame.transform.scale(pygame.image.load('images/phone1.jpg'), (540, 640))
 
 # Colors
 WHITE = (255, 255, 255)
@@ -190,11 +192,13 @@ CREAM = (255, 235, 205, 255)
 DARKGREY = (51, 51, 51, 255)
 ROYALBLUE = (72, 118, 255, 255)
 
+
 # Font
 def get_font(size):
     return pygame.font.SysFont("arial", size, bold=True)
 
-# Add gradient to background
+
+# add gradient to background
 def draw_gradient_background(surface, top_color, bottom_color):
     height = surface.get_height()
     width = surface.get_width()
@@ -206,7 +210,7 @@ def draw_gradient_background(surface, top_color, bottom_color):
         pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
 
 # Renders imported text to fit within a certain width
-def wrapped_text(surface, text, font, color, rect, line_spacing=6):
+def wrap_text(surface, text, font, color, rect, line_spacing=6):
     words = text.split()
     lines, cur = [], ""
     for w in words:
@@ -331,6 +335,7 @@ class TextBox:
             top = self.rect.y + padding_y
             bottom = top + self.font.get_height()
             pygame.draw.line(surface, border_col, (cursor_x + 1, top), (cursor_x + 1, bottom), 2)
+
 
 # Buttons
 class Button:
@@ -457,6 +462,7 @@ def tos():
 
         pygame.display.update()
 
+
 def adscreen():
     global MONEY_CENTS
 
@@ -466,8 +472,8 @@ def adscreen():
     # constant representing the total amount of ads that will run before final scene transition
     ADS_CAP = 31
     # constants determining weight value shift
-    POSITIVE = 0.2       # added to weight if yes
-    NEGATIVE = 0.1       # subtracted from weight if no
+    POSITIVE = 0.2  # added to weight if yes
+    NEGATIVE = 0.1  # subtracted from weight if no
     # constant defining minimum possible weight value
     MINIMUM_WEIGHT = 0.1
 
@@ -476,7 +482,7 @@ def adscreen():
         mouse_pos = pygame.mouse.get_pos()
 
         # YES / NO buttons
-        no_button  = Button("NO",  (285, 360), get_font(75), BLACK, DARKGREY, None)
+        no_button = Button("NO", (285, 360), get_font(75), BLACK, DARKGREY, None)
         yes_button = Button("YES", (1015, 360), get_font(75), BLACK, DARKGREY, None)
         for btn in (no_button, yes_button):
             btn.change_color(mouse_pos)
@@ -496,7 +502,8 @@ def adscreen():
         for event in pygame.event.get():
             # exit game
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
 
             # only relevant user input event (mouse button down)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -505,16 +512,16 @@ def adscreen():
                     MONEY_CENTS += 500 * 100  # +$500.00
                 # event for user pressing no button
                 elif no_button.check_for_input(event.pos):
-                    MONEY_CENTS += 5          # +$0.05
-                    
+                    MONEY_CENTS += 5  # +$0.05
+
                     # shift weight value of current product (subtract)
                     weight = current_product[1] - NEGATIVE
                     # edge case so that weight never goes below a minimum value
                     if weight < MINIMUM_WEIGHT:
                         weight = 0.1
-                    
+
                     products[current_product[3]][1] = weight
-                    
+
                     # check idx counter, if higher than the amount of products in product list then
                     # default to algorithmic image fetching. otherwise, iterate through one cycle of
                     # ads such that each product is represented once.
@@ -534,22 +541,22 @@ def adscreen():
                         if DEBUG:
                             print(current_product[0])
                         current_img = load_scaled(get_random_ad(current_product))
-                    
+
                     # go to final screen if ad cap is reached (maximum amount of intended ads has run)
                     if idx >= ADS_CAP:
                         final_screen()
                         return
-                    
+
                     # old code
                     # current_img = IMAGES[idx]
                 # event for user pressing yes button
                 elif yes_button.check_for_input(event.pos):
-                    MONEY_CENTS += 5          # +$0.05
-                    
+                    MONEY_CENTS += 5  # +$0.05
+
                     # shift weight value of current product (add)
-                    weight = current_product[1] + POSITIVE       
+                    weight = current_product[1] + POSITIVE
                     products[current_product[3]][1] = weight
-                    
+
                     # check idx counter, if higher than the amount of products in product list then
                     # default to algorithmic image fetching. otherwise, iterate through one cycle of
                     # ads such that each product is represented once.
@@ -568,16 +575,16 @@ def adscreen():
                         if DEBUG:
                             print(current_product[0])
                         current_img = load_scaled(get_random_ad(current_product))
-                    
+
                     # go to final screen if ad cap is reached (maximum amount of intended ads has run)
                     if idx >= ADS_CAP:
                         final_ad_page(5)
                         final_screen()
                         return
-                    
+
                     # old code
-                    # current_img = IMAGES[idx]    
-                
+                    # current_img = IMAGES[idx]
+
                 else:
                     # anywhere else -> partner page for 5s, then return here
                     show_partner_page(5)
@@ -590,10 +597,6 @@ def adscreen():
         pygame.display.update()
 
 
-
-
-
-
 def show_partner_page(seconds: int = 5):
     """Show a Partner Page with 6 main partners arranged nicely for `seconds`, then return."""
     end_time = pygame.time.get_ticks() + seconds * 1000
@@ -601,12 +604,12 @@ def show_partner_page(seconds: int = 5):
     title_rect = title_surf.get_rect(midtop=(WIDTH // 2, 40))
 
     partners = [
-        ("Google",      (66, 133, 244)),   # Blue
-        ("Meta",        (59, 89, 152)),    # Facebook Blue
-        ("Amazon",      (255, 153, 0)),    # Orange
-        ("Apple",       (153, 153, 153)),  # Grey
-        ("TikTok",      (255, 59, 92)),    # Pinkish Red
-        ("Twitter",     (29, 161, 242))    # Light Blue
+        ("Google", (66, 133, 244)),  # Blue
+        ("Meta", (59, 89, 152)),  # Facebook Blue
+        ("Amazon", (255, 153, 0)),  # Orange
+        ("Apple", (153, 153, 153)),  # Grey
+        ("TikTok", (255, 59, 92)),  # Pinkish Red
+        ("Twitter", (29, 161, 242))  # Light Blue
     ]
 
     partner_surfs = []
@@ -628,22 +631,23 @@ def show_partner_page(seconds: int = 5):
             SCREEN.blit(surf, rect)
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
         pygame.display.update()
-        pygame.time.delay(16) 
+        pygame.time.delay(16)
 
 
 def final_ad_page(seconds: int = 5):
     """Show an Ad Page before the final page for `seconds`, then return."""
     end_time = pygame.time.get_ticks() + seconds * 1000
 
-    # get final image 
+    # get final image
     weights = []
-    
+
     # create list of all weights with indices correlating to products list
     for product in products:
         weights.append(product[1])
-    
+
     # track index value of chosen product type
     index = 0
     # find highest weight value
@@ -654,24 +658,24 @@ def final_ad_page(seconds: int = 5):
         elif products[i][1] == products[index][1]:
             if random.randint(1, 2) == 1:
                 index = i
-                
+
     # get final ad
     final_ad = load_scaled(FINAL_ADS[index])
-    
+
     # main display loop
     while pygame.time.get_ticks() < end_time:
         SCREEN.fill(DARKGREY)
         SCREEN.blit(final_ad, final_ad.get_rect(center=SCREEN.get_rect().center))
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
         pygame.display.update()
-        pygame.time.delay(16) 
+        pygame.time.delay(16)
+
+    # Login screen
 
 
-
-
-# Login screen
 def login():
     # Create controls one time
     title = get_font(72).render("Sign In", True, WHITE)
@@ -681,7 +685,7 @@ def login():
     label_pass = get_font(36).render("Password", True, WHITE)
     label_ssn = get_font(36).render("SSN", True, WHITE)
 
-    #Username text box
+    # Username text box
     user_box = TextBox(
         rect=(WIDTH // 2 - 250, 220, 500, 60),
         font=get_font(36),
@@ -712,12 +716,10 @@ def login():
         border_color_active=ROYALBLUE,
         is_password=True,
         radius=15,
-        max_len=5     # limit to 5 characters
+        max_len=5  # limit to 5 characters
     )
 
-
     login_button = Button("LOGIN", (WIDTH // 2, 550), get_font(60), BLACK, WHITE, tos)
-
 
     while True:
         draw_gradient_background(SCREEN, (255, 69, 0, 255), (220, 20, 60, 255))
@@ -748,7 +750,8 @@ def login():
         # Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
             user_box.handle_event(event)
             pass_box.handle_event(event)
             ssn_box.handle_event(event)
@@ -760,15 +763,6 @@ def login():
                     login_button.callback()
 
         pygame.display.update()
-
-
-
-
-
-
-
-
-
 
 
 def final_screen():
@@ -785,7 +779,7 @@ def final_screen():
         SCREEN.blit(line1, line1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40)))
         SCREEN.blit(line2, line2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)))
 
-        # Money Counter 
+        # Money Counter
         money_text = get_font(40).render(f"Total: {format_money(MONEY_CENTS)}", True, WHITE)
         money_rect = money_text.get_rect(midbottom=(WIDTH // 2, HEIGHT - 30))
         SCREEN.blit(money_text, money_rect)
@@ -820,7 +814,8 @@ def final_screen():
         # exit = back to menu page
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if restart_btn.check_for_input(mouse_pos):
                     restart_btn.callback()
@@ -830,12 +825,6 @@ def final_screen():
                     return
 
         pygame.display.update()
-
-
-
-
-
-
 
 
 # Main Menu screen
@@ -862,13 +851,16 @@ def main_menu():
         # event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if start_button.check_for_input(mouse_pos):
                     start_button.callback()
                 if quit_button.check_for_input(mouse_pos):
-                    pygame.quit(); sys.exit()
+                    pygame.quit()
+                    sys.exit()
 
         pygame.display.update()
+
 
 main_menu()

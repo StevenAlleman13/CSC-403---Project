@@ -8,4 +8,6 @@ You can donate and if you click on the screen it will bring you to our partner p
 
 Finally, after going through all of our ads you will be given your own "Perfect Ad" based on your choices.
 
+To access all the features of this project, you need to download Ad-Tinder.py, TOS.txt, and all .jpg images.
+
 Thank you for playing!

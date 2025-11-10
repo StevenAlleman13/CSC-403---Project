@@ -1,4 +1,4 @@
-import pygame, sys, time
+import pygame, sys, time, random
 
 pygame.init()
 
@@ -7,35 +7,165 @@ WIDTH, HEIGHT = 1280, 720
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AD Tinder")
 
-# Image imports
-IMAGE_FILES = [
+# if true, certain relevant values will be printed to stdout
+DEBUG = False
+
+# Categorized image imports
+IMAGE_PHONE = [
     "phone1.jpg",
     "phone2.jpg",
     "phone3.jpg",
     "phone4.jpg",
     "phone5.jpg",
+    "phone6.jpg",
+    "phone7.jpg"
+]
+
+IMAGE_WATCH = [
     "watch1.jpg",
     "watch2.jpg",
     "watch3.jpg",
     "watch4.jpg",
+    "watch5.jpg",
+    "watch6.jpg",
+    "watch7.jpg",
+    "watch8.jpg"
+]
+
+IMAGE_SHIRT = [
     "shirt1.jpg",
     "shirt2.jpg",
     "shirt3.jpg",
     "shirt4.jpg",
+    "shirt5.jpg",
+    "shirt6.jpg",
+    "shirt7.jpg"
+]
+
+IMAGE_SHOE = [
     "shoe1.jpg",
     "shoe2.jpg",
     "shoe3.jpg",
     "shoe4.jpg",
     "shoe5.jpg",
+    "shoe6.jpg",
+    "shoe7.jpg"
+]
+
+IMAGE_TV = [
     "tv1.jpg",
     "tv2.jpg",
     "tv3.jpg",
     "tv4.jpg",
     "tv5.jpg",
+    "tv6.jpg",
+    "tv7.jpg"
 ]
 
+
+# final ads list. these will display upon completion based on product with highest weight value.
+# will not be included in overall image files list.
+FINAL_ADS = [
+        "phoneperfect.jpg",
+        "watchperfect.jpg",
+        "shirtperfect.jpg",
+        "shoeperfect.jpg",
+        "tvperfect.jpg"
+]
+
+# Full image imports list for certain usecases
+IMAGE_FILES = IMAGE_PHONE + IMAGE_WATCH + IMAGE_SHIRT + IMAGE_SHOE + IMAGE_TV
+
+
+# Products list
+# Format: <String> Product name, <Float> Weight, <String List> Filenames, <Integer> index within products list
+#
+# Weight value will be amended when program is running, so not a constant
+products = [
+    ["Phone", 0.0, IMAGE_PHONE, 0],
+    ["Watch", 0.0, IMAGE_WATCH, 1],
+    ["Shirt", 0.0, IMAGE_SHIRT, 2],
+    ["Shoe", 0.0, IMAGE_SHOE, 3],
+    ["TV", 0.0, IMAGE_TV, 4],
+]
+
+# take in products list (but not as a parameter so as to edit it)
+# returns one product within the products list
+# is passed to a different function to find a random ad in that category
+def get_ad():
+    # values that alter algorithm
+    BASE = 1.0  # base value (added to weight)
+    EXP = 2.0   # exponent   (applied to compound value)
+    MIN = 0.1   # minimum allowed compound value
+    
+    # ranges list: determines highest range of an index in products list being chosen.
+    ranges = []
+    # value: tracks the value of all previous compound values added together, or the previous value in the ranges list. will be equal to the final value in ranges list which is important for scaling a 0.0-1.0 range random var
+    value = 0
+
+    # fill out ranges list
+    for product in products:
+        # compound weight value
+        compound = ((product[1] + BASE) ** EXP)
+        # edge case for minimum value
+        if compound < 0.1:
+            compound = 0.1
+        
+        value += compound
+        ranges.append(value)
+        
+
+    # find random value
+    chosen = (random.random() * value)
+    
+    # debug
+    if DEBUG:
+        print(ranges)
+    
+    
+    # iterate over ranges list and find chosen product using relative indexing
+    for i in range(len(products)):
+        # condition where i == 0
+        if (i == 0):
+            # succeed if chosen is lower than value at ranges[i] 
+            if (chosen < ranges[i]):
+                # debug
+                if DEBUG:
+                    print("return value: " + products[i][0])
+                return products[i]
+        # condition where i > 0
+        else:
+            # succeed if chosen is greater than or equal to ranges[i - 1] and lower than ranges[i]
+            if ((chosen >= ranges[i - 1]) and (chosen < ranges[i])):
+                # debug
+                if DEBUG:
+                    print("return value: " + products[i][0])
+                return products[i]
+            
+
+# parameters: specific product list(an entry in products list)
+#
+# return value: a specific randomized entry from the
+# built in list of advertisement images in the product list
+def get_random_ad(product):
+    index = random.randint(0, (len(product[2]) - 1))
+    # debug
+    if DEBUG:
+        print(index)
+    return product[2][index]
+
+# parameters: none
+# resets weight values of all products to 1.0
+# primary use is for when game restarts
+def reset_weights():
+    for product in products:
+        product[1] = 1.0
+
+# parameters: relative file pathway to images (stored in images folder)
+#
+# returns image for use in pygame
 def load_scaled(path):
-    return pygame.transform.scale(pygame.image.load(path), (540, 640))
+    return pygame.transform.scale(pygame.image.load('images\\' + path), (540, 640))
 
 IMAGES = [load_scaled(p) for p in IMAGE_FILES]
 
@@ -47,7 +177,7 @@ def format_money(cents: int) -> str:
     c = cents % 100
     return f"${dollars:,}.{c:02d}"
 
-scaled_image1 = pygame.transform.scale(pygame.image.load('phone1.jpg'), (540, 640))
+scaled_image1 = pygame.transform.scale(pygame.image.load('images\phone1.jpg'), (540, 640))
 
 # Colors
 WHITE = (255, 255, 255)
@@ -241,7 +371,15 @@ def adscreen():
     global MONEY_CENTS
 
     idx = 0
-    current_img = IMAGES[idx]
+    current_product = products[idx]
+    current_img = load_scaled(get_random_ad(current_product))
+    # constant representing the total amount of ads that will run before final scene transition
+    ADS_CAP = 31
+    # constants determining weight value shift
+    POSITIVE = 0.2       # added to weight if yes
+    NEGATIVE = 0.1       # subtracted from weight if no
+    # constant defining minimum possible weight value
+    MINIMUM_WEIGHT = 0.1
 
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
@@ -266,20 +404,90 @@ def adscreen():
 
         # events
         for event in pygame.event.get():
+            # exit game
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
 
+            # only relevant user input event (mouse button down)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 # prioritize button hits first
                 if donate_btn.check_for_input(event.pos):
                     MONEY_CENTS += 500 * 100  # +$500.00
-                elif no_button.check_for_input(event.pos) or yes_button.check_for_input(event.pos):
+                # event for user pressing no button
+                elif no_button.check_for_input(event.pos):
                     MONEY_CENTS += 5          # +$0.05
-                    idx += 1
-                    if idx >= len(IMAGES):
+                    
+                    # shift weight value of current product (subtract)
+                    weight = current_product[1] - NEGATIVE
+                    # edge case so that weight never goes below a minimum value
+                    if weight < MINIMUM_WEIGHT:
+                        weight = 0.1
+                    
+                    products[current_product[3]][1] = weight
+                    
+                    # check idx counter, if higher than the amount of products in product list then
+                    # default to algorithmic image fetching. otherwise, iterate through one cycle of
+                    # ads such that each product is represented once.
+                    if idx < (len(products) - 1):
+                        # increment counter and set new values
+                        idx += 1
+                        current_product = products[idx]
+                        current_img = load_scaled(get_random_ad(current_product))
+                    # case where counter is higher than the length of products list
+                    # this will happen after the intended 'loop' at the beginning of the ad cycle
+                    # after the initial loop, all ads will be determined using the get_ad method
+                    else:
+                        # increment such that the ads cap is eventually reached
+                        idx += 1
+                        current_product = get_ad()
+                        # debug
+                        if DEBUG:
+                            print(current_product[0])
+                        current_img = load_scaled(get_random_ad(current_product))
+                    
+                    # go to final screen if ad cap is reached (maximum amount of intended ads has run)
+                    if idx >= ADS_CAP:
                         final_screen()
                         return
-                    current_img = IMAGES[idx]
+                    
+                    # old code
+                    # current_img = IMAGES[idx]
+                # event for user pressing yes button
+                elif yes_button.check_for_input(event.pos):
+                    MONEY_CENTS += 5          # +$0.05
+                    
+                    # shift weight value of current product (add)
+                    weight = current_product[1] + POSITIVE       
+                    products[current_product[3]][1] = weight
+                    
+                    # check idx counter, if higher than the amount of products in product list then
+                    # default to algorithmic image fetching. otherwise, iterate through one cycle of
+                    # ads such that each product is represented once.
+                    if idx < (len(products) - 1):
+                        # increment counter and set new values
+                        idx += 1
+                        current_product = products[idx]
+                        current_img = load_scaled(get_random_ad(current_product))
+                    # case where counter is higher than the length of products list
+                    # this will happen after the intended 'loop' at the beginning of the ad cycle
+                    # after the initial loop, all ads will be determined using the get_ad method
+                    else:
+                        # increment such that the ads cap is eventually reached
+                        idx += 1
+                        current_product = get_ad()
+                        if DEBUG:
+                            print(current_product[0])
+                        current_img = load_scaled(get_random_ad(current_product))
+                    
+                    # go to final screen if ad cap is reached (maximum amount of intended ads has run)
+                    if idx >= ADS_CAP:
+                        final_ad_page(5)
+                        final_screen()
+                        return
+                    
+                    # old code
+                    # current_img = IMAGES[idx]    
+                
                 else:
                     # anywhere else -> partner page for 5s, then return here
                     show_partner_page(5)
@@ -335,7 +543,40 @@ def show_partner_page(seconds: int = 5):
         pygame.time.delay(16) 
 
 
+def final_ad_page(seconds: int = 5):
+    """Show an Ad Page before the final page for `seconds`, then return."""
+    end_time = pygame.time.get_ticks() + seconds * 1000
 
+    # get final image 
+    weights = []
+    
+    # create list of all weights with indices correlating to products list
+    for product in products:
+        weights.append(product[1])
+    
+    # track index value of chosen product type
+    index = 0
+    # find highest weight value
+    for i in range(len(weights)):
+        if products[i][1] > products[index][1]:
+            index = i
+        # case for identical values. choose one at random
+        elif products[i][1] == products[index][1]:
+            if random.randint(1, 2) == 1:
+                index = i
+                
+    # get final ad
+    final_ad = load_scaled(FINAL_ADS[index])
+    
+    # main display loop
+    while pygame.time.get_ticks() < end_time:
+        SCREEN.fill(DARKGREY)
+        SCREEN.blit(final_ad, final_ad.get_rect(center=SCREEN.get_rect().center))
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+        pygame.display.update()
+        pygame.time.delay(16) 
 
 
 
@@ -481,9 +722,12 @@ def final_screen():
             pygame.draw.rect(SCREEN, BLACK, btn.rect, 2, border_radius=15)
             btn.update(SCREEN)
 
+        # reset product weight values for next cycle
+        reset_weights()
+
         # restart / exit Button events
         # resart = back to adscreen
-        # exit = back to 
+        # exit = back to menu page
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
@@ -496,10 +740,6 @@ def final_screen():
                     return
 
         pygame.display.update()
-
-
-
-
 
 
 

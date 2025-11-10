@@ -64,7 +64,7 @@ ROYALBLUE = (72, 118, 255, 255)
 def get_font(size):
     return pygame.font.SysFont("arial", size, bold=True)
 
-# add gradient to background
+# Add gradient to background
 def draw_gradient_background(surface, top_color, bottom_color):
     height = surface.get_height()
     width = surface.get_width()
@@ -75,9 +75,40 @@ def draw_gradient_background(surface, top_color, bottom_color):
         b = int(top_color[2] * (1 - ratio) + bottom_color[2] * ratio)
         pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
 
+# Renders imported text to fit within a certain width
+def wrapped_text(surface, text, font, color, rect, line_spacing=6):
+    words = text.split()
+    lines, cur = [], ""
+    for w in words:
+        test = (cur + " " + w).strip()
+        if font.size(test)[0] <= rect.width:
+            cur = test
+        else:
+            lines.append(cur); cur = w
+    if cur:
+        lines.append(cur)
 
+    y = rect.y
+    for line in lines:
+        if y + font.get_height() > rect.bottom:
+            break  # stop when we run out of space
+        surf = font.render(line, True, color)
+        surface.blit(surf, (rect.x, y))
+        y += font.get_height() + line_spacing
 
-
+# Returns wrapped lines that fit a given width
+def wrap_lines(text, font, max_width):
+    words = text.split()
+    lines, cur = [], ""
+    for w in words:
+        test = (cur + " " + w).strip()
+        if font.size(test)[0] <= max_width:
+            cur = test
+        else:
+            lines.append(cur); cur = w
+    if cur:
+        lines.append(cur)
+    return lines
 
 # TextBox
 class TextBox:
@@ -171,9 +202,6 @@ class TextBox:
             bottom = top + self.font.get_height()
             pygame.draw.line(surface, border_col, (cursor_x + 1, top), (cursor_x + 1, bottom), 2)
 
-
-
-
 # Buttons
 class Button:
     def __init__(self, text, pos, font, base_color, hovering_color, callback):
@@ -198,44 +226,106 @@ class Button:
         else:
             self.rendered = self.font.render(self.text, True, self.base_color)
 
-
-
-
-
-
 # Terms of Service screen
 def tos():
+    # Load TOS text
+    try:
+        with open("TOS.txt", "r", encoding="utf-8") as f:
+            tos_text = f.read()
+    except Exception:
+        tos_text = "Terms of Service file (TOS.txt) not found."
+
+    # Define a fixed box for the TOS text
+    box_rect = pygame.Rect(0, 0, 800, 400)
+    box_rect.center = (WIDTH // 2, HEIGHT // 2)
+
+
+    scroll = 0  # top line index
+
     while True:
         draw_gradient_background(SCREEN, DARKGREY, DARKGREY)
         mouse_pos = pygame.mouse.get_pos()
 
-        # Text
-        text = get_font(45).render("Terms of Service", True, WHITE)
-        text_rect = text.get_rect(center=(640, 260))
-        SCREEN.blit(text, text_rect)
+        # Title
+        title = get_font(65).render("Terms of Service", True, WHITE)
+        title_rect = title.get_rect(center=(640, 115))
+        SCREEN.blit(title, title_rect)
 
-        # accept button
-        accept_button = Button("ACCEPT", (640, 460), get_font(75), BLACK, DARKGREY, adscreen)
+        # Draw the TOS text box
+        # Fill
+        pygame.draw.rect(SCREEN, WHITE, box_rect, border_radius=12)
+        # Border
+        pygame.draw.rect(SCREEN, BLACK, box_rect, 3, border_radius=12)
+
+        # Sets up the scrollable text box
+        content_font = get_font(20)
+        pad_rect = box_rect.inflate(-20, -16)  # Padding
+        # Wrap once per frame
+        lines = wrap_lines(tos_text, content_font, pad_rect.width)
+
+        # Defines space inbetween lines, vertical height of one line, and lines seen the size of the box
+        line_spacing = 6
+        line_h = content_font.get_height() + line_spacing
+        visible_lines = max(1, pad_rect.height // line_h)
+
+        # Calculates how far down a user can scroll
+        max_scroll = max(0, len(lines) - visible_lines)
+        if scroll < 0: scroll = 0
+        if scroll > max_scroll: scroll = max_scroll
+
+        # As scroll increases, start shifts down in the lines list so you are able to
+        # see a different part of the text
+        y = pad_rect.y
+        start = scroll
+        end = min(start + visible_lines, len(lines))
+        for i in range(start, end):
+            surf = content_font.render(lines[i], True, BLACK)
+            SCREEN.blit(surf, (pad_rect.x, y))
+            y += line_h
+
+        # Creates a vertical scrollbar to track progress
+        track = pygame.Rect(pad_rect.right - 10, pad_rect.y, 8, pad_rect.height)
+        pygame.draw.rect(SCREEN, (220, 220, 220), track, border_radius=4)
+
+        if len(lines) > visible_lines:
+            thumb_h = max(30, int(track.height * (visible_lines / len(lines))))
+            # Position scrollbar based on scroll fraction
+            travel = track.height - thumb_h
+            frac = 0 if max_scroll == 0 else (scroll / max_scroll)
+            thumb_y = track.y + int(travel * frac)
+            thumb = pygame.Rect(track.x, thumb_y, track.width, thumb_h)
+            pygame.draw.rect(SCREEN, (120, 120, 120), thumb, border_radius=4)
+
+        # Accept button
+        accept_button = Button("ACCEPT", (640, 625), get_font(75), BLACK, DARKGREY, adscreen)
         accept_button.change_color(mouse_pos)
         pygame.draw.rect(SCREEN, WHITE, accept_button.rect, border_radius=15)
         pygame.draw.rect(SCREEN, BLACK, accept_button.rect, 4, border_radius=15)
         accept_button.update(SCREEN)
 
-        # Event loop
+        # Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                pygame.quit(); sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if accept_button.check_for_input(mouse_pos):
                     accept_button.callback()
+            # --- SCROLL INPUT ---
+            if event.type == pygame.MOUSEWHEEL:
+                # pygame: event.y is +1 on wheel up, -1 on wheel down
+                scroll -= event.y * 3  # tweak step size to taste
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_DOWN:
+                    scroll += 1
+                elif event.key == pygame.K_UP:
+                    scroll -= 1
+                elif event.key == pygame.K_PAGEDOWN:
+                    scroll += visible_lines
+                elif event.key == pygame.K_PAGEUP:
+                    scroll -= visible_lines
 
         pygame.display.update()
-
-
-
-
-
 
 def adscreen():
     global MONEY_CENTS
